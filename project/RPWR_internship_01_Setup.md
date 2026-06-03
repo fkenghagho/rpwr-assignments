@@ -134,17 +134,46 @@ ros2 topic hz /scan_throttle
 You will use the webcam as sensor for object recognition. Notice that it will be essential for transparent objects and the tracking goal in your navigation system. You will use opencv2 for the webcam and wrap the images into ros2 messages. For ros2-supported cameras such as ASUS xtion and Intel Realsense, there are already ROS2 drivers.
 
 ```bash
+#!/usr/bin/env python3
 import cv2
 import sys
 
-camera_index = 0
-cap = cv2.VideoCapture(camera_index)
-if not cap.isOpened():
-   return
-else:
-   cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-   cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
-ret, image = cap.read()
-if ret:
-   process(image)
+def main():
+    camera_index = 0
+    cap = cv2.VideoCapture(camera_index)
+
+    # Check if the webcam opened successfully
+    if not cap.isOpened():
+        print(f"Error: Could not open webcam at index {camera_index}.")
+        print("Check if the camera is plugged in or used by another process.")
+        sys.exit(1)
+
+    print("Webcam stream started successfully.")
+    print("Press 'q' or 'ESC' inside the graphic window to quit.")
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+    try:
+        while True:
+            ret, frame = cap.read()
+            if not ret:
+                print("Error: Failed to grab a frame from the webcam.")
+                break
+
+            cv2.imshow('Taking images from webcam', frame)
+
+            key = cv2.waitKey(1) & 0xFF
+            if key == ord('q') or key == 27:
+                print("Closing camera stream...")
+                break
+
+    except KeyboardInterrupt:
+        print("\n Interrupted by user via terminal (Ctrl+C). Cleaning up...")
+
+    finally:
+        cap.release()
+        cv2.destroyAllWindows()
+        print("Webcam released and window destroyed cleanly.")
+
+if __name__ == '__main__':
+    main()
 ```
